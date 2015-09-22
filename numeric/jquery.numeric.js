@@ -47,10 +47,17 @@ $.fn.numeric = function(config, callback)
 	var negative = (config.negative === true) ? true : false;
     // set decimal places
 	var decimalPlaces = (typeof config.decimalPlaces == "undefined") ? -1 : config.decimalPlaces;
+    //default value
+	var defaultValue = (typeof config.defaultValue == "undefined") ? "" : config.defaultValue;
 	// callback function
-	callback = (typeof(callback) == "function" ? callback : function() {});
+	callback = (typeof (callback) == "function" ? callback : function () { });
 	// set data and methods
-	return this.data("numeric.decimal", decimal).data("numeric.negative", negative).data("numeric.callback", callback).data("numeric.decimalPlaces", decimalPlaces).keypress($.fn.numeric.keypress).keyup($.fn.numeric.keyup).blur($.fn.numeric.blur);
+	return this.data("numeric.decimal", decimal)
+        .data("numeric.negative", negative)
+        .data("numeric.callback", callback)
+        .data("numeric.decimalPlaces", decimalPlaces)
+        .data("numeric.defaultValue", defaultValue)
+        .keypress($.fn.numeric.keypress).keyup($.fn.numeric.keyup).blur($.fn.numeric.blur);
 };
 
 $.fn.numeric.keypress = function(e)
@@ -164,102 +171,93 @@ $.fn.numeric.keypress = function(e)
 
 $.fn.numeric.keyup = function(e)
 {
-	var val = $(this).val();
-	if(val && val.length > 0)
-	{
-		// get carat (cursor) position
-		var carat = $.fn.getSelectionStart(this);
-		var selectionEnd = $.fn.getSelectionEnd(this);
-		// get decimal character and determine if negatives are allowed
-		var decimal = $.data(this, "numeric.decimal");
-		var negative = $.data(this, "numeric.negative");
-        var decimalPlaces = $.data(this, "numeric.decimalPlaces");
+    var val = $(this).val();
+    var defaultValue = $.data(this, "numeric.defaultValue");
 
-		// prepend a 0 if necessary
-		if(decimal !== "" && decimal !== null)
-		{
-			// find decimal point
-			var dot = $.inArray(decimal, val.split(''));
-			// if dot at start, add 0 before
-			if(dot === 0)
-			{
-				this.value = "0" + val;
-				carat++;
-            			selectionEnd++;
-			}
-			// if dot at position 1, check if there is a - symbol before it
-			if(dot == 1 && val.charAt(0) == "-")
-			{
-				this.value = "-0" + val.substring(1);
-				carat++;
-            			selectionEnd++;
-			}
-			val = this.value;
-		}
+	if (val && val.length > 0) {
+	    // get carat (cursor) position
+	    var carat = $.fn.getSelectionStart(this);
+	    var selectionEnd = $.fn.getSelectionEnd(this);
+	    // get decimal character and determine if negatives are allowed
+	    var decimal = $.data(this, "numeric.decimal");
+	    var negative = $.data(this, "numeric.negative");
+	    var decimalPlaces = $.data(this, "numeric.decimalPlaces");
 
-		// if pasted in, only allow the following characters
-		var validChars = [0,1,2,3,4,5,6,7,8,9,'-',decimal];
-		// get length of the value (to loop through)
-		var length = val.length;
-		// loop backwards (to prevent going out of bounds)
-		for(var i = length - 1; i >= 0; i--)
-		{
-			var ch = val.charAt(i);
-			// remove '-' if it is in the wrong place
-			if(i !== 0 && ch == "-")
-			{
-				val = val.substring(0, i) + val.substring(i + 1);
-			}
-			// remove character if it is at the start, a '-' and negatives aren't allowed
-			else if(i === 0 && !negative && ch == "-")
-			{
-				val = val.substring(1);
-			}
-			var validChar = false;
-			// loop through validChars
-			for(var j = 0; j < validChars.length; j++)
-			{
-				// if it is valid, break out the loop
-				if(ch == validChars[j])
-				{
-					validChar = true;
-					break;
-				}
-			}
-			// if not a valid character, or a space, remove
-			if(!validChar || ch == " ")
-			{
-				val = val.substring(0, i) + val.substring(i + 1);
-			}
-		}
-		// remove extra decimal characters
-		var firstDecimal = $.inArray(decimal, val.split(''));
-		if(firstDecimal > 0)
-		{
-			for(var k = length - 1; k > firstDecimal; k--)
-			{
-				var chch = val.charAt(k);
-				// remove decimal character
-				if(chch == decimal)
-				{
-					val = val.substring(0, k) + val.substring(k + 1);
-				}
-			}
-		}
+	    // prepend a 0 if necessary
+	    if (decimal !== "" && decimal !== null) {
+	        // find decimal point
+	        var dot = $.inArray(decimal, val.split(''));
+	        // if dot at start, add 0 before
+	        if (dot === 0) {
+	            this.value = "0" + val;
+	            carat++;
+	            selectionEnd++;
+	        }
+	        // if dot at position 1, check if there is a - symbol before it
+	        if (dot == 1 && val.charAt(0) == "-") {
+	            this.value = "-0" + val.substring(1);
+	            carat++;
+	            selectionEnd++;
+	        }
+	        val = this.value;
+	    }
 
-        // remove extra decimal places
-        if(decimal && decimalPlaces > 0)
-        {
-            var dot = $.inArray(decimal, val.split(''));
-            if (dot >= 0)
-            {
-                val = val.substring(0, dot + decimalPlaces + 1);
-                selectionEnd = Math.min(val.length, selectionEnd);
-            }
+	    // if pasted in, only allow the following characters
+	    var validChars = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, '-', decimal];
+	    // get length of the value (to loop through)
+	    var length = val.length;
+	    // loop backwards (to prevent going out of bounds)
+	    for (var i = length - 1; i >= 0; i--) {
+	        var ch = val.charAt(i);
+	        // remove '-' if it is in the wrong place
+	        if (i !== 0 && ch == "-") {
+	            val = val.substring(0, i) + val.substring(i + 1);
+	        }
+	        // remove character if it is at the start, a '-' and negatives aren't allowed
+	        else if (i === 0 && !negative && ch == "-") {
+	            val = val.substring(1);
+	        }
+	        var validChar = false;
+	        // loop through validChars
+	        for (var j = 0; j < validChars.length; j++) {
+	            // if it is valid, break out the loop
+	            if (ch == validChars[j]) {
+	                validChar = true;
+	                break;
+	            }
+	        }
+	        // if not a valid character, or a space, remove
+	        if (!validChar || ch == " ") {
+	            val = val.substring(0, i) + val.substring(i + 1);
+	        }
+	    }
+	    // remove extra decimal characters
+	    var firstDecimal = $.inArray(decimal, val.split(''));
+	    if (firstDecimal > 0) {
+	        for (var k = length - 1; k > firstDecimal; k--) {
+	            var chch = val.charAt(k);
+	            // remove decimal character
+	            if (chch == decimal) {
+	                val = val.substring(0, k) + val.substring(k + 1);
+	            }
+	        }
+	    }
+
+	    // remove extra decimal places
+	    if (decimal && decimalPlaces > 0) {
+	        var dot = $.inArray(decimal, val.split(''));
+	        if (dot >= 0) {
+	            val = val.substring(0, dot + decimalPlaces + 1);
+	            selectionEnd = Math.min(val.length, selectionEnd);
+	        }
+	    }
+	    // set the value and prevent the cursor moving to the end
+	    this.value = val;
+	    $.fn.setSelection(this, [carat, selectionEnd]);
+	} else {
+        if (defaultValue !== "") {
+            this.value = defaultValue;
         }
-		// set the value and prevent the cursor moving to the end
-		this.value = val;
-		$.fn.setSelection(this, [carat, selectionEnd]);
 	}
 };
 
@@ -269,14 +267,12 @@ $.fn.numeric.blur = function()
 	var callback = $.data(this, "numeric.callback");
 	var negative = $.data(this, "numeric.negative");
 	var val = this.value;
-	if(val !== "")
-	{
-		var re = new RegExp("^" + (negative?"-?":"") + "\\d+$|^" + (negative?"-?":"") + "\\d*" + decimal + "\\d+$");
-		if(!re.exec(val))
-		{
-			callback.apply(this);
-		}
-	}
+	if (val !== "") {
+	    var re = new RegExp("^" + (negative ? "-?" : "") + "\\d+$|^" + (negative ? "-?" : "") + "\\d*" + decimal + "\\d+$");
+	    if (!re.exec(val)) {
+	        callback.apply(this);
+	    }
+	} 
 };
 
 $.fn.removeNumeric = function()
